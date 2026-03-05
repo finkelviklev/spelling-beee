@@ -644,7 +644,7 @@ function shareScore() {
   const text = `🐝 SpellBee Score! 🐝\n\nI got ${r.correct}/${r.total} correct! (${r.percent}%)\n⏱ Time: ${timeStr}\n${stars}\n\nCan you beat my score?\n\nhttps://spellingbeee.com`;
 
   if (navigator.share) {
-    navigator.share({ title: "SpellBee Score", text, url: "https://spellingbeee.com" }).catch(() => {
+    navigator.share({ title: "SpellBee Score", text }).catch(() => {
       copyToClipboard(text);
     });
   } else {
