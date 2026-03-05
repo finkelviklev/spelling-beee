@@ -57,6 +57,9 @@ const i18n = {
     undo: "Undo",
     clearTiles: "Clear",
     wordsAdded: "words added!",
+    myWords: "My Words",
+    myWordsDesc: "Your personal word list",
+    noCustomWords: "Add your own words first!",
   },
   it: {
     subtitle: "Pratica la tua ortografia!",
@@ -115,6 +118,9 @@ const i18n = {
     undo: "Indietro",
     clearTiles: "Cancella",
     wordsAdded: "parole aggiunte!",
+    myWords: "Le Mie Parole",
+    myWordsDesc: "La tua lista personale",
+    noCustomWords: "Aggiungi prima le tue parole!",
   },
 };
 
@@ -182,6 +188,7 @@ const STORAGE_KEY = "spellbee_data";
 let state = {
   language: "en",
   words: { en: [], it: [] },
+  customWords: { en: [], it: [] },
   bestScores: { en: null, it: null },
   currentScreen: "home",
   game: null,
@@ -236,11 +243,12 @@ function playCompleteSound() {
 // ===== STORAGE =====
 function loadState() {
   try {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       state.language = parsed.language || "en";
       state.words = parsed.words || { en: [], it: [] };
+      state.customWords = parsed.customWords || { en: [], it: [] };
       state.bestScores = parsed.bestScores || { en: null, it: null };
       state.settings = parsed.settings || {
         wordsPerRound: 15,
@@ -252,11 +260,12 @@ function loadState() {
 
 function saveState() {
   try {
-    sessionStorage.setItem(
+    localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
         language: state.language,
         words: state.words,
+        customWords: state.customWords,
         bestScores: state.bestScores,
         settings: state.settings,
       })
@@ -297,6 +306,11 @@ function updateUI() {
   } else {
     bestDisplay.style.display = "none";
   }
+
+  // Custom word count
+  const customCount = state.customWords[state.language].length;
+  const customCountEl = document.getElementById("custom-word-count");
+  if (customCountEl) customCountEl.textContent = customCount;
 
   // Update html lang
   document.documentElement.lang = state.language;
@@ -341,7 +355,11 @@ function renderWordList() {
   list.querySelectorAll(".word-item-delete").forEach((btn) => {
     btn.addEventListener("click", () => {
       const idx = parseInt(btn.dataset.index);
+      const deletedWord = state.words[state.language][idx];
       state.words[state.language].splice(idx, 1);
+      // Also remove from custom words if present
+      const customIdx = state.customWords[state.language].indexOf(deletedWord);
+      if (customIdx !== -1) state.customWords[state.language].splice(customIdx, 1);
       saveState();
       renderWordList();
       updateUI();
@@ -367,6 +385,10 @@ function addWord(word) {
   }
 
   words.push(cleaned);
+  // Track as custom word (user-added, not generated)
+  if (!state.customWords[state.language].includes(cleaned)) {
+    state.customWords[state.language].push(cleaned);
+  }
   saveState();
   renderWordList();
   updateUI();
@@ -483,8 +505,8 @@ function speak(word) {
 }
 
 // ===== GAME ENGINE =====
-function startGame() {
-  const allWords = [...state.words[state.language]];
+function startGame(customWordList) {
+  const allWords = customWordList ? [...customWordList] : [...state.words[state.language]];
   if (allWords.length === 0) return;
 
   shuffle(allWords);
@@ -1103,6 +1125,7 @@ function init() {
   // Clear all words
   document.getElementById("btn-clear-all").addEventListener("click", () => {
     state.words[state.language] = [];
+    state.customWords[state.language] = [];
     saveState();
     renderWordList();
     updateUI();
@@ -1149,11 +1172,21 @@ function init() {
     updateUI();
   });
 
-  // Generate word level cards
-  document.querySelectorAll(".level-card").forEach((card) => {
+  // Generate word level cards (exclude custom card)
+  document.querySelectorAll(".level-card[data-level]").forEach((card) => {
     card.addEventListener("click", () => {
       generateWords(card.dataset.level);
     });
+  });
+
+  // My Words (custom) card
+  document.getElementById("btn-play-custom").addEventListener("click", () => {
+    const custom = state.customWords[state.language];
+    if (custom.length === 0) {
+      showToast(t("noCustomWords"));
+      return;
+    }
+    startGame(custom);
   });
 
   // Level 1 play tiles prompt

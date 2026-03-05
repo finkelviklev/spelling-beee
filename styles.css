@@ -525,6 +525,21 @@ html, body {
 .level-card-1 { border-left: 4px solid var(--green); }
 .level-card-2 { border-left: 4px solid var(--orange); }
 .level-card-3 { border-left: 4px solid var(--purple); }
+.level-card-custom { border-left: 4px solid var(--blue); }
+.custom-word-count {
+  margin-left: auto;
+  background: var(--blue);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  min-width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 .level-emoji { font-size: 32px; flex-shrink: 0; }
 .level-text { display: flex; flex-direction: column; gap: 2px; }
 .level-name { font-size: 16px; font-weight: 800; color: var(--text); }
