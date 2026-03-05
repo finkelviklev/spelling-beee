@@ -641,10 +641,10 @@ function shareScore() {
   const starCount = r.percent >= 90 ? 3 : r.percent >= 70 ? 2 : r.percent >= 40 ? 1 : 0;
   const stars = "⭐".repeat(starCount);
 
-  const text = `🐝 SpellBee Score! 🐝\n\nI got ${r.correct}/${r.total} correct! (${r.percent}%)\n⏱ Time: ${timeStr}\n${stars}\n\nCan you beat my score?`;
+  const text = `🐝 SpellBee Score! 🐝\n\nI got ${r.correct}/${r.total} correct! (${r.percent}%)\n⏱ Time: ${timeStr}\n${stars}\n\nCan you beat my score?\n\nhttps://spellingbeee.com`;
 
   if (navigator.share) {
-    navigator.share({ title: "SpellBee Score", text }).catch(() => {
+    navigator.share({ title: "SpellBee Score", text, url: "https://spellingbeee.com" }).catch(() => {
       copyToClipboard(text);
     });
   } else {
