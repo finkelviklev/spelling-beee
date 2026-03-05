@@ -306,12 +306,14 @@ async function processImage(file) {
       logger: () => {},
     });
 
-    const text = result.data.text;
-    // Extract words: split by whitespace, newlines, commas, semicolons, numbers
-    const rawWords = text
-      .split(/[\s,;.\n\r\t]+/)
-      .map((w) => w.replace(/[^a-zA-ZàèéìòùÀÈÉÌÒÙ'-]/g, "").trim().toLowerCase())
-      .filter((w) => w.length >= 2);
+    // Use word-level data with confidence scores for accurate extraction
+    const words = result.data.words || [];
+    const rawWords = words
+      .filter((w) => w.confidence > 60)  // Only confident recognitions
+      .map((w) => w.text.replace(/[^a-zA-ZàèéìòùÀÈÉÌÒÙ'-]/g, "").trim().toLowerCase())
+      .filter((w) => w.length >= 3)       // Skip fragments (1-2 chars)
+      .filter((w) => !/^[^aeiouàèéìòù]*$/i.test(w))  // Must contain a vowel (real word)
+      .filter((w) => !/(.)\1{2,}/.test(w));            // No repeated chars like "aaa"
 
     // Deduplicate
     const uniqueWords = [...new Set(rawWords)];
