@@ -44,6 +44,19 @@ const i18n = {
     all: "All",
     perfectScore: "PERFECT! You're a spelling champion!",
     next: "Next",
+    orGenerate: "or generate",
+    generateWords: "Generate Words",
+    level1Name: "Little Speller",
+    level1Desc: "Tap the letters in order!",
+    level2Name: "Word Explorer",
+    level2Desc: "Listen & spell it right!",
+    level3Name: "Spelling Wizard",
+    level3Desc: "Challenge yourself!",
+    level1Ready: "15 words ready! Play in letter-tile mode?",
+    playTileMode: "Play Letter Tiles!",
+    undo: "Undo",
+    clearTiles: "Clear",
+    wordsAdded: "words added!",
   },
   it: {
     subtitle: "Pratica la tua ortografia!",
@@ -89,6 +102,73 @@ const i18n = {
     all: "Tutte",
     perfectScore: "PERFETTO! Sei un campione di ortografia!",
     next: "Avanti",
+    orGenerate: "oppure genera",
+    generateWords: "Genera Parole",
+    level1Name: "Piccolo Spelling",
+    level1Desc: "Tocca le lettere in ordine!",
+    level2Name: "Esploratore",
+    level2Desc: "Ascolta e scrivi!",
+    level3Name: "Mago delle Parole",
+    level3Desc: "Sfida te stesso!",
+    level1Ready: "15 parole pronte! Giocare con le lettere?",
+    playTileMode: "Gioca con le Lettere!",
+    undo: "Indietro",
+    clearTiles: "Cancella",
+    wordsAdded: "parole aggiunte!",
+  },
+};
+
+// ===== GENERATED WORD LISTS =====
+const GENERATED_WORDS = {
+  en: {
+    level1: [
+      "cat","dog","sun","hat","cup","bed","run","big","red","top",
+      "map","pen","sit","hop","fun","box","lip","mud","net","wig",
+      "bat","pin","jam","log","hug","bus","kit","fox","hen","dot",
+      "pig","van","web","zip","gum"
+    ],
+    level2: [
+      "happy","table","river","dance","brave","cloud","smile","dream",
+      "fruit","green","light","music","plant","queen","stone","train",
+      "under","voice","water","young","bridge","castle","forest","garden",
+      "island","jungle","kitchen","market","orange","purple","rabbit",
+      "silver","window","yellow","gentle"
+    ],
+    level3: [
+      "beautiful","chocolate","dangerous","education","furniture",
+      "geography","happiness","invisible","knowledge","landscape",
+      "mysterious","necessary","orchestra","passenger","recognize",
+      "sculpture","technique","umbrella","vegetable","wonderful",
+      "abundance","brilliant","cathedral","delicious","elaborate",
+      "fascinate","guarantee","hibernate","influence","jewellery",
+      "labyrinth","magnificent","neighbour","obedient","phenomenon"
+    ],
+  },
+  it: {
+    level1: [
+      "casa","sole","luna","mare","pane","luce","mano","naso",
+      "gatto","cane","pesce","fiore","bello","alto","rosso","verde",
+      "nero","acqua","neve","uovo","rana","orso","lupo","lago",
+      "riso","vino","pera","noce","sera","vita","nota","topo",
+      "dado","dito","mela"
+    ],
+    level2: [
+      "albero","piazza","scuola","amico","tavolo","finestra","giardino",
+      "bottiglia","cammino","dolce","felice","grande","inverno","leggere",
+      "montagna","nuvola","piccolo","ragazzo","sorriso","trovare",
+      "bambino","cercare","domanda","esempio","fratello","insieme",
+      "lontano","mattina","nascere","parlare","ricordo","sentire",
+      "viaggio","famiglia","pensiero"
+    ],
+    level3: [
+      "avventura","bellissimo","conoscenza","difficile","esperienza",
+      "fantastico","giovinezza","immaginare","letteratura","meraviglioso",
+      "nascondere","particolare","raccogliere","straordinario",
+      "trascorrere","attraversare","consigliare","dimenticare","entusiasmo",
+      "impossibile","magnifico","naturalezza","personaggio","riconoscere",
+      "significato","trattamento","accoglienza","biancheria","considerare",
+      "divertimento","gentilezza","intelligente","soddisfazione","temperatura"
+    ],
   },
 };
 
@@ -465,7 +545,7 @@ function stopTimer() {
 
 function checkAnswer() {
   const game = state.game;
-  if (!game) return;
+  if (!game || game.mode === "tiles") return;
 
   const input = document.getElementById("game-input");
   const typed = input.value.trim().toLowerCase();
@@ -510,6 +590,7 @@ function showFeedback(isCorrect, correctWord) {
 
 function endGame() {
   stopTimer();
+  cleanupTileMode();
   playCompleteSound();
 
   const game = state.game;
@@ -628,6 +709,197 @@ function showResults(correct, total, percent, time, answers) {
 
   // Store results for sharing
   state.lastResult = { correct, total, percent, time };
+}
+
+// ===== GENERATE WORDS =====
+function generateWords(level) {
+  const lang = state.language;
+  const pool = [...GENERATED_WORDS[lang][level]];
+  shuffle(pool);
+  const selected = pool.slice(0, 15);
+
+  let addedCount = 0;
+  selected.forEach((word) => {
+    if (!state.words[lang].includes(word)) {
+      state.words[lang].push(word);
+      addedCount++;
+    }
+  });
+
+  saveState();
+  renderWordList();
+  updateUI();
+
+  if (addedCount > 0) {
+    showToast(`${addedCount} ${t("wordsAdded")}`);
+  } else {
+    showToast(state.language === "it" ? "Parole già presenti!" : "Words already in list!");
+  }
+
+  if (level === "level1") {
+    const prompt = document.getElementById("level1-play-prompt");
+    prompt.style.display = "flex";
+    prompt.scrollIntoView({ behavior: "smooth" });
+    state._level1GameWords = selected;
+  } else {
+    document.getElementById("level1-play-prompt").style.display = "none";
+    document.getElementById("word-list-section").scrollIntoView({ behavior: "smooth" });
+  }
+}
+
+// ===== TILE GAME ENGINE =====
+function startTileGame(words) {
+  const gameWords = [...words];
+  shuffle(gameWords);
+  const limit = state.settings.wordsPerRound;
+  const finalWords = limit === "all" ? gameWords : gameWords.slice(0, Math.min(limit, gameWords.length));
+
+  state.game = {
+    words: finalWords,
+    currentIndex: 0,
+    answers: [],
+    startTime: Date.now(),
+    timerInterval: null,
+    mode: "tiles",
+    tileState: null,
+  };
+
+  showScreen("game");
+  document.getElementById("game-input-area").style.display = "none";
+  document.getElementById("tile-mode").style.display = "flex";
+  document.getElementById("btn-check").style.display = "none";
+
+  updateTileGameUI();
+  startTimer();
+
+  setTimeout(() => speak(state.game.words[0]), 500);
+}
+
+function updateTileGameUI() {
+  const game = state.game;
+  const total = game.words.length;
+  const current = game.currentIndex + 1;
+
+  document.getElementById("current-word-num").textContent = current;
+  document.getElementById("total-words").textContent = total;
+  document.getElementById("game-progress").style.width = `${((current - 1) / total) * 100}%`;
+
+  const word = game.words[game.currentIndex];
+  const letters = word.split("");
+  const shuffled = shuffle([...letters]);
+
+  game.tileState = {
+    correctWord: word,
+    shuffledLetters: shuffled,
+    selectedIndices: [],
+    builtWord: "",
+  };
+
+  renderTiles();
+}
+
+function renderTiles() {
+  const ts = state.game.tileState;
+  const builtEl = document.getElementById("tile-built-word");
+  const gridEl = document.getElementById("tile-grid");
+  const wordLen = ts.correctWord.length;
+
+  let builtHTML = "";
+  for (let i = 0; i < wordLen; i++) {
+    if (i < ts.selectedIndices.length) {
+      const letter = ts.shuffledLetters[ts.selectedIndices[i]];
+      builtHTML += `<div class="tile-built-letter">${letter.toUpperCase()}</div>`;
+    } else {
+      builtHTML += `<div class="tile-placeholder"></div>`;
+    }
+  }
+  builtEl.innerHTML = builtHTML;
+
+  gridEl.innerHTML = ts.shuffledLetters
+    .map((letter, idx) => {
+      const used = ts.selectedIndices.includes(idx);
+      return `<button class="tile-letter${used ? " used" : ""}" data-tile-index="${idx}">${letter.toUpperCase()}</button>`;
+    })
+    .join("");
+
+  gridEl.querySelectorAll(".tile-letter:not(.used)").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectTile(parseInt(btn.dataset.tileIndex));
+    });
+  });
+}
+
+function selectTile(index) {
+  const ts = state.game.tileState;
+  ts.selectedIndices.push(index);
+  ts.builtWord = ts.selectedIndices.map((i) => ts.shuffledLetters[i]).join("");
+  renderTiles();
+
+  if (ts.builtWord.length === ts.correctWord.length) {
+    setTimeout(() => checkTileAnswer(), 400);
+  }
+}
+
+function undoTile() {
+  const ts = state.game.tileState;
+  if (ts && ts.selectedIndices.length > 0) {
+    ts.selectedIndices.pop();
+    ts.builtWord = ts.selectedIndices.map((i) => ts.shuffledLetters[i]).join("");
+    renderTiles();
+  }
+}
+
+function clearTiles() {
+  const ts = state.game.tileState;
+  if (ts) {
+    ts.selectedIndices = [];
+    ts.builtWord = "";
+    renderTiles();
+  }
+}
+
+function checkTileAnswer() {
+  const game = state.game;
+  const ts = game.tileState;
+  const isCorrect = ts.builtWord === ts.correctWord;
+
+  game.answers.push({
+    word: ts.correctWord,
+    typed: ts.builtWord,
+    correct: isCorrect,
+  });
+
+  if (isCorrect) {
+    playCorrectSound();
+  } else {
+    playIncorrectSound();
+  }
+
+  // Show brief feedback for kids
+  const overlay = document.getElementById("feedback-overlay");
+  overlay.innerHTML = isCorrect
+    ? `<div class="feedback-content correct"><span class="feedback-icon">✅</span><span>${t("correct")}</span></div>`
+    : `<div class="feedback-content incorrect"><span class="feedback-icon">❌</span><span>${t("incorrect")}</span><br><small>${t("correctAnswer")} <strong>${ts.correctWord}</strong></small></div>`;
+  overlay.classList.add("show", isCorrect ? "correct" : "incorrect");
+
+  const delay = isCorrect ? FEEDBACK_DELAY_CORRECT : FEEDBACK_DELAY_INCORRECT;
+
+  setTimeout(() => {
+    overlay.classList.remove("show", "correct", "incorrect");
+    game.currentIndex++;
+    if (game.currentIndex >= game.words.length) {
+      endGame();
+    } else {
+      updateTileGameUI();
+      setTimeout(() => speak(game.words[game.currentIndex]), 300);
+    }
+  }, delay);
+}
+
+function cleanupTileMode() {
+  document.getElementById("game-input-area").style.display = "";
+  document.getElementById("tile-mode").style.display = "none";
+  document.getElementById("btn-check").style.display = "";
 }
 
 // ===== SHARE =====
@@ -856,13 +1128,18 @@ function init() {
   // Game: quit
   document.getElementById("btn-quit-game").addEventListener("click", () => {
     stopTimer();
+    cleanupTileMode();
     showScreen("home");
     updateUI();
   });
 
   // Results buttons
   document.getElementById("btn-play-again").addEventListener("click", () => {
-    startGame();
+    if (state.game && state.game.mode === "tiles") {
+      startTileGame(state.game.words);
+    } else {
+      startGame();
+    }
   });
 
   document.getElementById("btn-share").addEventListener("click", shareScore);
@@ -871,6 +1148,24 @@ function init() {
     showScreen("home");
     updateUI();
   });
+
+  // Generate word level cards
+  document.querySelectorAll(".level-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      generateWords(card.dataset.level);
+    });
+  });
+
+  // Level 1 play tiles prompt
+  document.getElementById("btn-play-tiles").addEventListener("click", () => {
+    if (state._level1GameWords && state._level1GameWords.length > 0) {
+      startTileGame(state._level1GameWords);
+    }
+  });
+
+  // Tile undo & clear
+  document.getElementById("btn-tile-undo").addEventListener("click", undoTile);
+  document.getElementById("btn-tile-clear").addEventListener("click", clearTiles);
 
   // Initial UI update
   updateUI();

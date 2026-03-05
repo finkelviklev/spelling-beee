@@ -134,6 +134,46 @@
           </div>
         </div>
 
+        <div class="divider">
+          <span data-i18n="orGenerate">or generate</span>
+        </div>
+
+        <div class="generate-section">
+          <h3 class="generate-title" data-i18n="generateWords">Generate Words</h3>
+          <div class="level-cards">
+            <button class="level-card level-card-1" data-level="level1">
+              <span class="level-emoji">🐣</span>
+              <div class="level-text">
+                <span class="level-name" data-i18n="level1Name">Little Speller</span>
+                <span class="level-desc" data-i18n="level1Desc">Tap the letters in order!</span>
+              </div>
+            </button>
+            <button class="level-card level-card-2" data-level="level2">
+              <span class="level-emoji">🦊</span>
+              <div class="level-text">
+                <span class="level-name" data-i18n="level2Name">Word Explorer</span>
+                <span class="level-desc" data-i18n="level2Desc">Listen & spell it right!</span>
+              </div>
+            </button>
+            <button class="level-card level-card-3" data-level="level3">
+              <span class="level-emoji">🧙</span>
+              <div class="level-text">
+                <span class="level-name" data-i18n="level3Name">Spelling Wizard</span>
+                <span class="level-desc" data-i18n="level3Desc">Challenge yourself!</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <div class="level1-play-prompt" id="level1-play-prompt" style="display:none">
+          <span class="level1-play-emoji">🐣</span>
+          <p data-i18n="level1Ready">15 words ready! Play in letter-tile mode?</p>
+          <button class="btn btn-primary btn-block" id="btn-play-tiles">
+            <span class="btn-icon">▶️</span>
+            <span data-i18n="playTileMode">Play Letter Tiles!</span>
+          </button>
+        </div>
+
         <div class="word-list-section" id="word-list-section">
           <div class="word-list-header">
             <h3 data-i18n="yourWords">Your Words</h3>
@@ -171,8 +211,21 @@
             <span class="speaker-label" data-i18n="tapToHear">Tap to hear</span>
           </button>
 
-          <div class="game-input-area">
+          <div class="game-input-area" id="game-input-area">
             <input type="text" class="input input-game" id="game-input" data-i18n-placeholder="typeHere" placeholder="Type what you hear..." autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" data-gramm="false" autofocus>
+          </div>
+
+          <div class="tile-mode" id="tile-mode" style="display:none">
+            <div class="tile-built-word" id="tile-built-word"></div>
+            <div class="tile-grid" id="tile-grid"></div>
+            <div class="tile-actions">
+              <button class="btn btn-outline btn-sm" id="btn-tile-undo">
+                <span>↩️</span> <span data-i18n="undo">Undo</span>
+              </button>
+              <button class="btn btn-ghost btn-sm" id="btn-tile-clear">
+                <span data-i18n="clearTiles">Clear</span>
+              </button>
+            </div>
           </div>
 
           <button class="btn btn-primary btn-block btn-lg" id="btn-check">
