@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>SpellBee</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐝</text></svg>">
+</head>
+<body>
+  <div class="app">
+
+    <!-- ===== HOME SCREEN ===== -->
+    <div id="screen-home" class="screen active">
+      <div class="screen-content home-content">
+        <button class="btn-settings" id="btn-settings" aria-label="Settings">⚙️</button>
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="en">
+            <span class="lang-flag">🇬🇧</span> English
+          </button>
+          <button class="lang-btn" data-lang="it">
+            <span class="lang-flag">🇮🇹</span> Italiano
+          </button>
+        </div>
+
+        <div class="hero">
+          <div class="bee-mascot">🐝</div>
+          <h1 class="app-title">SpellBee</h1>
+          <p class="app-subtitle" data-i18n="subtitle">Practice your spelling!</p>
+        </div>
+
+        <div class="word-count-badge">
+          <span class="word-count-number" id="home-word-count">0</span>
+          <span data-i18n="wordsInList">words in your list</span>
+        </div>
+
+        <div class="home-actions">
+          <button class="btn btn-secondary btn-block" id="btn-add-words">
+            <span class="btn-icon">✏️</span>
+            <span data-i18n="addWords">Add Words</span>
+          </button>
+          <button class="btn btn-primary btn-block" id="btn-play" disabled>
+            <span class="btn-icon">▶️</span>
+            <span data-i18n="play">Play!</span>
+          </button>
+        </div>
+
+        <div class="best-score-display" id="best-score-display" style="display:none">
+          <span>⭐</span>
+          <span data-i18n="bestScore">Best score:</span>
+          <span id="best-score-value"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SETTINGS SCREEN ===== -->
+    <div id="screen-settings" class="screen">
+      <div class="screen-content">
+        <div class="screen-header">
+          <button class="btn-back" id="btn-back-settings">
+            <span>←</span>
+          </button>
+          <h2 class="screen-title" data-i18n="settings">Settings</h2>
+          <div class="header-spacer"></div>
+        </div>
+
+        <div class="settings-section">
+          <h3 class="settings-label" data-i18n="wordsPerRound">Words per round</h3>
+          <div class="settings-option-group" id="words-per-round-selector"></div>
+        </div>
+
+        <div class="settings-section">
+          <h3 class="settings-label" data-i18n="voiceSelection">Voice</h3>
+          <div class="voice-selector-area">
+            <select class="input settings-select" id="voice-select"></select>
+            <button class="btn btn-outline btn-sm" id="btn-preview-voice">
+              <span class="btn-icon">🔊</span>
+              <span data-i18n="preview">Preview</span>
+            </button>
+          </div>
+          <p class="settings-hint" data-i18n="voiceHint">Select a voice for word pronunciation</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADD WORDS SCREEN ===== -->
+    <div id="screen-words" class="screen">
+      <div class="screen-content">
+        <div class="screen-header">
+          <button class="btn-back" id="btn-back-home">
+            <span>←</span>
+          </button>
+          <h2 class="screen-title" data-i18n="addWords">Add Words</h2>
+          <div class="header-spacer"></div>
+        </div>
+
+        <div class="add-section">
+          <div class="input-row">
+            <input type="text" class="input" id="word-input" data-i18n-placeholder="typeWord" placeholder="Type a word..." autocomplete="off" autocapitalize="none" spellcheck="false">
+            <button class="btn btn-primary" id="btn-add-word">
+              <span data-i18n="add">Add</span>
+            </button>
+          </div>
+
+          <div class="divider">
+            <span data-i18n="or">or</span>
+          </div>
+
+          <button class="btn btn-outline btn-block" id="btn-upload-photo">
+            <span class="btn-icon">📷</span>
+            <span data-i18n="uploadPhoto">Upload Photo</span>
+          </button>
+          <input type="file" id="photo-input" accept="image/*" capture="environment" style="display:none">
+
+          <div class="ocr-loading" id="ocr-loading" style="display:none">
+            <div class="spinner"></div>
+            <p data-i18n="processingPhoto">Processing photo...</p>
+          </div>
+
+          <div class="ocr-results" id="ocr-results" style="display:none">
+            <h3 data-i18n="foundWords">Found these words:</h3>
+            <div id="ocr-word-list" class="ocr-word-list"></div>
+            <div class="ocr-actions">
+              <button class="btn btn-primary" id="btn-add-ocr-words">
+                <span data-i18n="addSelected">Add Selected</span>
+              </button>
+              <button class="btn btn-ghost" id="btn-cancel-ocr">
+                <span data-i18n="cancel">Cancel</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="word-list-section" id="word-list-section">
+          <div class="word-list-header">
+            <h3 data-i18n="yourWords">Your Words</h3>
+            <span class="word-list-count" id="word-list-count">0</span>
+          </div>
+          <div class="word-list" id="word-list"></div>
+          <button class="btn btn-ghost btn-sm" id="btn-clear-all" style="display:none">
+            <span data-i18n="clearAll">Clear All</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== GAME SCREEN ===== -->
+    <div id="screen-game" class="screen">
+      <div class="screen-content game-content">
+        <div class="game-header">
+          <button class="btn-close" id="btn-quit-game">✕</button>
+          <div class="progress-bar">
+            <div class="progress-fill" id="game-progress"></div>
+          </div>
+          <div class="timer" id="game-timer">0:00</div>
+        </div>
+
+        <div class="game-body">
+          <div class="word-counter" id="word-counter">
+            <span data-i18n="word">Word</span>
+            <span id="current-word-num">1</span>
+            <span data-i18n="of">of</span>
+            <span id="total-words">15</span>
+          </div>
+
+          <button class="speaker-btn" id="btn-speak">
+            <span class="speaker-icon">🔊</span>
+            <span class="speaker-label" data-i18n="tapToHear">Tap to hear</span>
+          </button>
+
+          <div class="game-input-area">
+            <input type="text" class="input input-game" id="game-input" data-i18n-placeholder="typeHere" placeholder="Type what you hear..." autocomplete="off" autocapitalize="none" spellcheck="false" autofocus>
+          </div>
+
+          <button class="btn btn-primary btn-block btn-lg" id="btn-check">
+            <span data-i18n="next">Next</span>
+          </button>
+        </div>
+
+        <!-- Feedback overlay -->
+        <div class="feedback-overlay" id="feedback-overlay">
+          <div class="feedback-content" id="feedback-content">
+            <div class="feedback-icon" id="feedback-icon"></div>
+            <div class="feedback-text" id="feedback-text"></div>
+            <div class="feedback-correct" id="feedback-correct"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RESULTS SCREEN ===== -->
+    <div id="screen-results" class="screen">
+      <div class="screen-content results-content">
+        <div class="results-hero">
+          <div class="results-emoji" id="results-emoji">🏆</div>
+          <h2 class="results-title" id="results-title" data-i18n="greatJob">Great job!</h2>
+          <div class="score-circle" id="score-circle">
+            <span class="score-number" id="score-number">0</span>
+            <span class="score-total" id="score-total">/15</span>
+          </div>
+          <div class="score-percent" id="score-percent">0%</div>
+          <div class="score-stars" id="score-stars"></div>
+          <div class="score-time">
+            <span>⏱</span>
+            <span data-i18n="time">Time:</span>
+            <span id="score-time-value">0:00</span>
+          </div>
+        </div>
+
+        <div class="results-breakdown">
+          <h3 data-i18n="breakdown">Breakdown</h3>
+          <div class="results-list" id="results-list"></div>
+        </div>
+
+        <div class="results-actions">
+          <button class="btn btn-primary btn-block" id="btn-play-again">
+            <span class="btn-icon">🔄</span>
+            <span data-i18n="playAgain">Play Again</span>
+          </button>
+          <button class="btn btn-outline btn-block" id="btn-share">
+            <span class="btn-icon">📤</span>
+            <span data-i18n="shareScore">Share Score</span>
+          </button>
+          <button class="btn btn-ghost btn-block" id="btn-go-home">
+            <span data-i18n="backToHome">Back to Home</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Share toast -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
